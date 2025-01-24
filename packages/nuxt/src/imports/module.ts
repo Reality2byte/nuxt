@@ -1,5 +1,5 @@
 import { existsSync } from 'node:fs'
-import { addBuildPlugin, addTemplate, addTypeTemplate, defineNuxtModule, isIgnored, logger, resolveAlias, tryResolveModule, updateTemplates, useNuxt } from '@nuxt/kit'
+import { addBuildPlugin, addTemplate, addTypeTemplate, createIsIgnored, defineNuxtModule, resolveAlias, tryResolveModule, updateTemplates, useNuxt } from '@nuxt/kit'
 import { isAbsolute, join, normalize, relative, resolve } from 'pathe'
 import type { Import, Unimport } from 'unimport'
 import { createUnimport, scanDirExports, toExports } from 'unimport'
@@ -7,13 +7,13 @@ import type { ImportPresetWithDeprecation, ImportsOptions, ResolvedNuxtTemplate 
 import escapeRE from 'escape-string-regexp'
 
 import { lookupNodeModuleSubpath, parseNodeModulePath } from 'mlly'
-import { isDirectory } from '../utils'
+import { isDirectory, logger } from '../utils'
 import { TransformPlugin } from './transform'
 import { defaultPresets } from './presets'
 
 export default defineNuxtModule<Partial<ImportsOptions>>({
   meta: {
-    name: 'imports',
+    name: 'nuxt:imports',
     configKey: 'imports',
   },
   defaults: nuxt => ({
@@ -41,13 +41,19 @@ export default defineNuxtModule<Partial<ImportsOptions>>({
     // Filter disabled sources
     // options.sources = options.sources.filter(source => source.disabled !== true)
 
+    const { addons: inlineAddons, ...rest } = options
+
+    const [addons, addonsOptions] = Array.isArray(inlineAddons) ? [inlineAddons] : [[], inlineAddons]
+
     // Create a context to share state between module internals
     const ctx = createUnimport({
       injectAtEnd: true,
-      ...options,
+      ...rest,
       addons: {
+        addons,
         vueTemplate: options.autoImport,
-        ...options.addons,
+        vueDirectives: options.autoImport === false ? undefined : true,
+        ...addonsOptions,
       },
       presets,
     })
@@ -107,14 +113,12 @@ export default defineNuxtModule<Partial<ImportsOptions>>({
 
     const priorities = nuxt.options._layers.map((layer, i) => [layer.config.srcDir, -i] as const).sort(([a], [b]) => b.length - a.length)
 
+    const IMPORTS_TEMPLATE_RE = /\/imports\.(?:d\.ts|mjs)$/
     function isImportsTemplate (template: ResolvedNuxtTemplate) {
-      return [
-        '/types/imports.d.ts',
-        '/imports.d.ts',
-        '/imports.mjs',
-      ].some(i => template.filename.endsWith(i))
+      return IMPORTS_TEMPLATE_RE.test(template.filename)
     }
 
+    const isIgnored = createIsIgnored(nuxt)
     const regenerateImports = async () => {
       await ctx.modifyDynamicImports(async (imports) => {
         // Clear old imports
