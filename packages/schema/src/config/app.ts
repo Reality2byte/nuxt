@@ -235,7 +235,7 @@ export default defineUntypedSchema({
     },
 
     /**
-     * Customize Nuxt root element tag.
+     * Customize Nuxt Teleport element tag.
      */
     teleportTag: {
       $resolve: val => val || 'div',
@@ -261,6 +261,21 @@ export default defineUntypedSchema({
           id: teleportId === false ? undefined : (teleportId || 'teleports'),
         })
       },
+    },
+
+    /**
+     * Customize Nuxt SpaLoader element tag.
+     */
+    spaLoaderTag: {
+      $resolve: val => val || 'div',
+    },
+
+    /**
+     * Customize Nuxt Nuxt SpaLoader element attributes.
+     * @type {typeof import('@unhead/schema').HtmlAttributes}
+     */
+    spaLoaderAttrs: {
+      id: '__nuxt-loader',
     },
   },
 
@@ -299,7 +314,7 @@ export default defineUntypedSchema({
    *   animation: loader 400ms linear infinite;
    * }
    *
-   * \@-webkit-keyframes loader {
+   * @-webkit-keyframes loader {
    *   0% {
    *     -webkit-transform: translate(-50%, -50%) rotate(0deg);
    *   }
@@ -307,7 +322,7 @@ export default defineUntypedSchema({
    *     -webkit-transform: translate(-50%, -50%) rotate(360deg);
    *   }
    * }
-   * \@keyframes loader {
+   * @keyframes loader {
    *   0% {
    *     transform: translate(-50%, -50%) rotate(0deg);
    *   }

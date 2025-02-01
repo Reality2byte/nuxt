@@ -59,7 +59,7 @@ function serverStandalone (ctx: WebpackConfigContext) {
     resolve(ctx.nuxt.options.rootDir, ctx.nuxt.options.dir.shared),
   ]
   if (!ctx.nuxt.options.dev) {
-    external.push('#internal/nuxt/paths', '#internal/nuxt/app-config')
+    external.push('#internal/nuxt/paths', '#internal/nuxt/app-config', '#app-manifest')
   }
 
   if (!Array.isArray(ctx.config.externals)) { return }
@@ -85,7 +85,7 @@ function serverStandalone (ctx: WebpackConfigContext) {
 }
 
 function serverPlugins (ctx: WebpackConfigContext) {
-  ctx.config.plugins = ctx.config.plugins || []
+  ctx.config.plugins ||= []
 
   // Server polyfills
   if (ctx.userConfig.serverURLPolyfill) {
